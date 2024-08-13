@@ -21,9 +21,37 @@ struct MemoryGame <CardContent> where CardContent: Equatable {
             cards.append(Card(content: content, id: "\(pairIndex+1)b"))
         }
     }
+    var indexOfTheOneAndOnlyFaceUpCard: Int? {
+        get { cards.indices.filter { index in cards[index].isFaceUp }.only }
+        set { cards.indices.forEach { cards[$0].isFaceUp = (newValue == $0) }
+            
+//            for index in cards.indices {
+//                if index == newValue {
+//                    cards[index].isFaceUp = true
+//                } else {
+//                    cards[index].isFaceUp = false
+//                }
+//            }
+        }
+    }
     
-    func choose(card: Card) {
-        
+    mutating func choose(card: Card) {
+        if let choosenIndex = cards.firstIndex(where: { cardTocheck in
+            cardTocheck.id == card.id
+        }) {
+            
+            if !cards[choosenIndex].isFaceUp && !cards[choosenIndex].isMatched {
+                if let potentialMatchIndex = indexOfTheOneAndOnlyFaceUpCard {
+                    if cards[choosenIndex].content == cards[potentialMatchIndex].content {
+                        cards[choosenIndex].isMatched = true
+                        cards[potentialMatchIndex].isMatched = true
+                    }
+                } else {
+                    indexOfTheOneAndOnlyFaceUpCard = choosenIndex
+                }
+                cards[choosenIndex].isFaceUp = true
+            }
+        }
     }
     
     mutating func shuffle () {
@@ -34,7 +62,7 @@ struct MemoryGame <CardContent> where CardContent: Equatable {
     
     struct Card: Equatable, Identifiable, CustomDebugStringConvertible {
         
-        var isFaceUp = true
+        var isFaceUp = false
         var isMatched = false
         let content: CardContent
         
@@ -44,8 +72,13 @@ struct MemoryGame <CardContent> where CardContent: Equatable {
             "\(id) \(content) \(isFaceUp ? "up" : "down") \(isMatched ? "matched" : "")"
         }
         
-        
     }
     
     
+}
+
+extension Array {
+    var only: Element? {
+        return count == 1 ? first : nil
+    }
 }
